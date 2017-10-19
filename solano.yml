@@ -1,0 +1,6 @@
+ruby_version: '2.2.3'
+bundler_version: '1.15.4'
+
+hooks:
+  package_setup: bundle install --path=$HOME/bundle --no-deployment
+

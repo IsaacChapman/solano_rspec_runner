@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# 
+# Copyright (c) 2017 Solano Labs All Rights Reserved
+#
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+
+require "solano_rspec_runner"
+
+SolanoRspecRunner.run(ARGV)
