@@ -5,10 +5,8 @@ require 'nokogiri'
 require 'tempfile'
 require 'socket'
 require 'time'
-require 'cgi'
 
 module SolanoRspecRunner
-  VERSION = "0.0.1"
   class << self
     def run(argv)
 
@@ -68,46 +66,22 @@ module SolanoRspecRunner
         @tests, @skipped, @failures, @errors = [0, 0, 0, 0]
       end
 
-
       # If no tests were run and the command failed, presume an rspec level error, so mark all tests as failed
       if @rspec_status != 0 && @tests == 0 then
         @all_errors = true
       end
 
       if @all_errors then
-        # While RspecJunitFormatter does not mark tests as 'error' ever, marking these tests as 'error' is more accurate
-        # (even though Solano may mark them as 'failure')
-        # and write more expressive Junit XML output then RspecJunitFormatter would
-        # (https://github.com/sj26/rspec_junit_formatter/blob/master/lib/rspec_junit_formatter.rb)
+        # While RspecJunitFormatter does not mark tests as 'error' ever (https://github.com/sj26/rspec_junit_formatter/blob/master/lib/rspec_junit_formatter.rb),
+        # marking these tests as 'error' is more accurate (even though Solano may mark them as 'failure')
         @test_files.each do |test_file|
-          system_out = Nokogiri::XML::Node.new('system-out', @junit_doc) # TODO: Check if 'system_out' is required instead of 'system-out'
-          system_out.content = "ERROR: Marked as error due to rspec command failure:\n#{@rspec_command}\n\n#{@rspec_output}"
-          error = Nokogiri::XML::Node.new('error', @junit_doc)
-          error['message'] = "ERROR: Marked as error due to rspec command failure"
-          testcase = Nokogiri::XML::Node.new('testcase', @junit_doc)
-          testcase['classname'] = test_file.gsub(/.rb$/, '').gsub('/', '.') # To make consistent with RspecJunitFormatter
-          testcase['name'] = "ERROR: #{test_file}"
-          testcase['file'] = path_prefix_test_file(test_file)
-          testcase['time'] = "0"
-          testcase << system_out
-          testcase << error
-          @junit_doc.xpath("//testsuite").first.add_child(testcase)
+          add_testcase(test_file, 'error', "ERROR: Marked as error due to rspec command failure", ":\n#{@rspec_command}\n\n#{@rspec_output}")
           @tests += 1
           @errors += 1
         end
       else
         @missing_test_files.each do |test_file|
-          system_out = Nokogiri::XML::Node.new('system-out', @junit_doc) # TODO: Check if 'system_out' is required instead of 'system-out'
-          system_out.content = "#{test_file} did not report output, marked as skipped"
-          skipped = Nokogiri::XML::Node.new('skipped', @junit_doc)
-          testcase = Nokogiri::XML::Node.new('testcase', @junit_doc)
-          testcase['classname'] = test_file.gsub(/.rb$/, '').gsub('/', '.') # To make consistent with RspecJunitFormatter
-          testcase['name'] = "SKIPPED: #{test_file}"
-          testcase['file'] = path_prefix_test_file(test_file)
-          testcase['time'] = "0"
-          testcase << system_out
-          testcase << skipped
-          @junit_doc.xpath("//testsuite").first.add_child(testcase)
+          add_testcase(test_file, 'skipped', "#{test_file} did not report output, marked as skipped")
           @tests += 1
           @skipped += 1
         end
@@ -123,7 +97,7 @@ module SolanoRspecRunner
       # Insert @rspec_command as property
       rspec_command_property = Nokogiri::XML::Node.new('property', @junit_doc)
       rspec_command_property['name'] = "command"
-      rspec_command_property['value'] = CGI.escape(@rspec_command)
+      rspec_command_property['value'] = @rspec_command
       @junit_doc.xpath("//testsuite/properties").first.add_child(rspec_command_property)
 
       # Write Junit XML file
@@ -135,6 +109,21 @@ module SolanoRspecRunner
       end
       
       Kernel.exit(@rspec_status)
+    end
+
+    def add_testcase(test_file, reason, message, message_extended = '') # reason is 'skipped' or 'error'
+      system_out = Nokogiri::XML::Node.new('system-out', @junit_doc) # TODO: Check if 'system_out' is required instead of 'system-out'
+      system_out.content = "#{message}#{message_extended}"
+      reason_node = Nokogiri::XML::Node.new(reason, @junit_doc)
+      reason_node['message'] = message
+      testcase = Nokogiri::XML::Node.new('testcase', @junit_doc)
+      testcase['classname'] = test_file.gsub(/.rb$/, '').gsub('/', '.') # To make consistent with RspecJunitFormatter
+      testcase['file'] = path_prefix_test_file(test_file)
+      testcase['time'] = "0"
+      testcase['name'] = "#{reason.upcase}: #{test_file}"
+      testcase << system_out
+      testcase << reason_node
+      @junit_doc.xpath("//testsuite").first.add_child(testcase)
     end
 
     def get_report_path_info

@@ -44,7 +44,7 @@ RSpec.describe "Correctly creates junit xml" do
     end
 
     it "the executed command included all test files" do
-      expect(CGI::unescape(command_property['value'])).to include(spec_files)
+      expect(command_property['value']).to include(spec_files)
     end
 
     it "the correct number of testcases" do
@@ -71,7 +71,7 @@ RSpec.describe "Correctly creates junit xml" do
     end
 
     it "the executed command included all test files" do
-      expect(CGI::unescape(command_property['value'])).to include(spec_files)
+      expect(command_property['value']).to include(spec_files)
     end
 
     it "the correct number of testcases" do
@@ -103,7 +103,7 @@ RSpec.describe "Correctly creates junit xml" do
     end
 
     it "the executed command included all test files" do
-      expect(CGI::unescape(command_property['value'])).to include(spec_files)
+      expect(command_property['value']).to include(spec_files)
     end
 
     it "the correct number of testcases" do
@@ -130,7 +130,7 @@ RSpec.describe "Correctly creates junit xml" do
     end
 
     it "the executed command included all test files" do
-      expect(CGI::unescape(command_property['value'])).to include(spec_files)
+      expect(command_property['value']).to include(spec_files)
     end
 
     it "the correct number of testcases" do
@@ -162,7 +162,7 @@ RSpec.describe "Correctly creates junit xml" do
     end
 
     it "the executed command included all test files" do
-      expect(CGI::unescape(command_property['value'])).to include(spec_files)
+      expect(command_property['value']).to include(spec_files)
     end
 
     it "the correct number of testcases" do
@@ -193,7 +193,7 @@ RSpec.describe "Correctly creates junit xml" do
     end
 
     it "the executed command included all test files" do
-      expect(CGI::unescape(command_property['value'])).to include(spec_files)
+      expect(command_property['value']).to include(spec_files)
     end
 
     it "the correct number of testcases" do
@@ -224,7 +224,7 @@ RSpec.describe "Correctly creates junit xml" do
     end
 
     it "the executed command included all test files" do
-      expect(CGI::unescape(command_property['value'])).to include(spec_files)
+      expect(command_property['value']).to include(spec_files)
     end
 
     it "the correct number of testcases" do
@@ -240,4 +240,158 @@ RSpec.describe "Correctly creates junit xml" do
     end
   end
 
+  context "with only an undefined variable test" do
+    let(:spec_files) { "spec/undefined_var_spec.rb" }
+
+    it "returned the correct exit code" do
+      expect(rpsec_command).to eq(false)
+    end
+
+    it "testsuite has accurate counts" do
+      expect(testsuite['tests']).to eql("1")
+      expect(testsuite['skipped']).to eql("0")
+      expect(testsuite['failures']).to eql("1")
+      expect(testsuite['errors']).to eql("0")
+    end
+
+    it "the executed command included all test files" do
+      expect(command_property['value']).to include(spec_files)
+    end
+
+    it "the correct number of testcases" do
+      expect(testcases.count).to eql(1)
+      expect(passing_testcases.count).to eql(0)
+      expect(pending_testcases.count).to eql(0)
+      expect(failed_testcases.count).to eql(1)
+      expect(errored_testcases.count).to eql(0)
+    end
+
+    it "include the error message in failed testcase" do
+      expect(first_failed_testcase_content).to include("undefined local variable or method")
+    end
+  end
+
+  context "with undefined variable and passing tests" do
+    let(:spec_files) { "spec/undefined_var_spec.rb spec/pass_1_spec.rb" }
+
+    it "returned the correct exit code" do
+      expect(rpsec_command).to eq(false)
+    end
+
+    it "testsuite has accurate counts" do
+      expect(testsuite['tests']).to eql("2")
+      expect(testsuite['skipped']).to eql("0")
+      expect(testsuite['failures']).to eql("1")
+      expect(testsuite['errors']).to eql("0")
+    end
+
+    it "the executed command included all test files" do
+      expect(command_property['value']).to include(spec_files)
+    end
+
+    it "the correct number of testcases" do
+      expect(testcases.count).to eql(2)
+      expect(passing_testcases.count).to eql(1)
+      expect(pending_testcases.count).to eql(0)
+      expect(failed_testcases.count).to eql(1)
+      expect(errored_testcases.count).to eql(0)
+    end
+
+    it "include the error message in failed testcase" do
+      expect(first_failed_testcase_content).to include("undefined local variable or method")
+    end
+  end
+
+  context "with undefined variable and skipped tests" do
+    let(:spec_files) { "spec/undefined_var_spec.rb spec/skip_1_spec.rb" }
+
+    it "returned the correct exit code" do
+      expect(rpsec_command).to eq(false)
+    end
+
+    it "testsuite has accurate counts" do
+      expect(testsuite['tests']).to eql("2")
+      expect(testsuite['skipped']).to eql("1")
+      expect(testsuite['failures']).to eql("1")
+      expect(testsuite['errors']).to eql("0")
+    end
+
+    it "the executed command included all test files" do
+      expect(command_property['value']).to include(spec_files)
+    end
+
+    it "the correct number of testcases" do
+      expect(testcases.count).to eql(2)
+      expect(passing_testcases.count).to eql(0)
+      expect(pending_testcases.count).to eql(1)
+      expect(failed_testcases.count).to eql(1)
+      expect(errored_testcases.count).to eql(0)
+    end
+
+    it "include the error message in failed testcase" do
+      expect(first_failed_testcase_content).to include("undefined local variable or method")
+    end
+  end
+
+  context "with only an uninitialized constant test" do
+    let(:spec_files) { "spec/uninitialized_constant_spec.rb" }
+
+    it "returned the correct exit code" do
+      expect(rpsec_command).to eq(false)
+    end
+
+    it "testsuite has accurate counts" do
+      expect(testsuite['tests']).to eql("1")
+      expect(testsuite['skipped']).to eql("0")
+      expect(testsuite['failures']).to eql("1")
+      expect(testsuite['errors']).to eql("0")
+    end
+
+    it "the executed command included all test files" do
+      expect(command_property['value']).to include(spec_files)
+    end
+
+    it "the correct number of testcases" do
+      expect(testcases.count).to eql(1)
+      expect(passing_testcases.count).to eql(0)
+      expect(pending_testcases.count).to eql(0)
+      expect(failed_testcases.count).to eql(1)
+      expect(errored_testcases.count).to eql(0)
+    end
+
+    it "include the error message in failed testcase" do
+      expect(first_failed_testcase_content).to include("uninitialized constant NonExistingClass")
+    end
+  end
+
+  context "with uninitialized constant and passing tests" do
+    let(:spec_files) { "spec/uninitialized_constant_spec.rb spec/pass_1_spec.rb" }
+
+    it "returned the correct exit code" do
+      expect(rpsec_command).to eq(false)
+    end
+
+    it "testsuite has accurate counts" do
+      expect(testsuite['tests']).to eql("2")
+      expect(testsuite['skipped']).to eql("0")
+      expect(testsuite['failures']).to eql("1")
+      expect(testsuite['errors']).to eql("0")
+    end
+
+    it "the executed command included all test files" do
+      expect(command_property['value']).to include(spec_files)
+    end
+
+    it "the correct number of testcases" do
+      expect(testcases.count).to eql(2)
+      expect(passing_testcases.count).to eql(1)
+      expect(pending_testcases.count).to eql(0)
+      expect(failed_testcases.count).to eql(1)
+      expect(errored_testcases.count).to eql(0)
+    end
+
+    it "include the error message in failed testcase" do
+      expect(first_failed_testcase_content).to include("uninitialized constant NonExistingClass")
+    end
+  end
 end
