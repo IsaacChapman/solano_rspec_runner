@@ -4,3 +4,8 @@ bundler_version: '1.15.4'
 hooks:
   package_setup: bundle install --path=$HOME/bundle --no-deployment
 
+# Only one test file, so no point in auto-parallelizing it
+test_pattern:
+  - none
+tests:
+  - bundle exec rspec --format documentation
