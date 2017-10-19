@@ -1,4 +1,3 @@
-require "solano_rspec_runner/version"
 require 'pathname'
 require 'fileutils'
 require 'open3'
@@ -9,6 +8,7 @@ require 'time'
 require 'cgi'
 
 module SolanoRspecRunner
+  VERSION = "0.0.1"
   class << self
     def run(argv)
 
@@ -35,18 +35,8 @@ module SolanoRspecRunner
         Kernel.exit(2)
       end
 
-      # Where is the final Junit XML stored?
-      xml_reports_directory = ENV['REPORTS_DIRECTORY'] || 'reports'
-      xml_report_pattern = ENV['REPORT_PATTERN'] || '%s-rspec.xml'
-      xml_report_id = if ENV.has_key?('REPORT_ID') then
-        ENV['REPORT_ID']
-      elsif ENV.has_key?('TDDIUM_TEST_EXEC_ID_LIST') then
-        ENV['TDDIUM_TEST_EXEC_ID_LIST'].split(",").first
-      elsif ENV.has_key?('TDDIUM_TEST_EXEC_ID') then
-        ENV['TDDIUM_TEST_EXEC_ID']
-      else
-        Time.now.to_f.to_s
-      end
+      # Where is the final Junit XML report stored?
+      xml_report_file, xml_reports_directory, xml_report_pattern, xml_report_id = get_report_path_info
 
       # Solano can alter the '.rspec' file in the repo's root directory
       rspec_arguments = ENV['RSPEC_ARGS'] || '--order defined --backtrace --color --tty'
@@ -137,16 +127,31 @@ module SolanoRspecRunner
       @junit_doc.xpath("//testsuite/properties").first.add_child(rspec_command_property)
 
       # Write Junit XML file
-      FileUtils.mkdir_p(xml_reports_directory)
-      xml_report_file = sprintf(xml_report_pattern, xml_report_id)
-      File.write(File.join(xml_reports_directory, xml_report_file), @junit_doc.to_xml)
+      File.write(xml_report_file, @junit_doc.to_xml)
       if ENV.has_key?('TDDIUM_REPO_ROOT') && ENV.has_key?('TDDIUM_SESSION_ID') then
         # Also attach to build artifacts tab when run on Solano CI
         # http://docs.solanolabs.com/Setup/interacting-with-build-environment/#using-a-post-worker-hook
-        FileUtils.cp(File.join(xml_reports_directory, xml_report_file), File.join(ENV['HOME'], 'results', ENV['TDDIUM_SESSION_ID'], 'session', xml_report_file))
+        FileUtils.cp(xml_report_file, File.join(ENV['HOME'], 'results', ENV['TDDIUM_SESSION_ID'], 'session', xml_report_file))
       end
       
       Kernel.exit(@rspec_status)
+    end
+
+    def get_report_path_info
+      xml_reports_directory = ENV['REPORTS_DIRECTORY'] || 'reports'
+      FileUtils.mkdir_p(xml_reports_directory)
+      xml_report_pattern = ENV['REPORT_PATTERN'] || '%s-rspec.xml'
+      xml_report_id = if ENV.has_key?('REPORT_ID') then
+        ENV['REPORT_ID']
+      elsif ENV.has_key?('TDDIUM_TEST_EXEC_ID_LIST') then
+        ENV['TDDIUM_TEST_EXEC_ID_LIST'].split(",").first
+      elsif ENV.has_key?('TDDIUM_TEST_EXEC_ID') then
+        ENV['TDDIUM_TEST_EXEC_ID']
+      else
+        Time.now.to_f.to_s
+      end
+      xml_report_file = File.join(xml_reports_directory, sprintf(xml_report_pattern, xml_report_id))
+      [xml_report_file, xml_reports_directory, xml_report_pattern, xml_report_id]
     end
 
     def get_test_counts

@@ -1,6 +1,5 @@
 require 'bundler/setup'
 require 'solano_rspec_runner'
-require 'nokogiri'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

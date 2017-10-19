@@ -1,11 +1,10 @@
 # coding: utf-8
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "solano_rspec_runner/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "solano_rspec_runner"
-  spec.version       = SolanoRspecRunner::VERSION
+  spec.version       = "0.0.1"
   spec.authors       = ["Isaac Chapman"]
   spec.email         = ["isaac@solanolabs.com"]
 

@@ -1,10 +1,5 @@
 require 'spec_helper'
-
-RSpec.describe SolanoRspecRunner do
-  it "has a version number" do
-    expect(SolanoRspecRunner::VERSION).not_to be nil
-  end
-end
+require 'nokogiri'
 
 RSpec.describe "Correctly creates junit xml" do
   EXAMPLE_DIR = File.expand_path("../../example", __FILE__)
@@ -17,11 +12,11 @@ RSpec.describe "Correctly creates junit xml" do
   end
 
   before(:each) do
-    FileUtils.rm_f(File.join(ENV['REPORTS_DIRECTORY'], sprintf(ENV['REPORT_PATTERN'], ENV['REPORT_ID'])))
+    FileUtils.rm_f(SolanoRspecRunner.get_report_path_info.first)
   end
 
   let(:spec_files) { "" }
-  let(:report_file) { File.join(ENV['REPORTS_DIRECTORY'], sprintf(ENV['REPORT_PATTERN'], ENV['REPORT_ID'])) }
+  let(:report_file) { SolanoRspecRunner.get_report_path_info.first }
   let(:rpsec_command) { system("cd #{EXAMPLE_DIR}; #{BIN} #{spec_files}") }
   let(:junit_doc) { File.open(File.join(EXAMPLE_DIR, report_file)) { |f| Nokogiri::XML(f) } }
   let(:testsuite) { junit_doc.xpath("//testsuite").first }
@@ -244,5 +239,5 @@ RSpec.describe "Correctly creates junit xml" do
       expect(first_errored_testcase_error['message']).to eql("ERROR: Marked as error due to rspec command failure")
     end
   end
-  
+
 end
