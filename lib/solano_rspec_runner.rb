@@ -133,8 +133,8 @@ module SolanoRspecRunner
       testcase_node['file'] = path_prefix_test_file(test_file)
       testcase_node['time'] = "0"
       testcase_node['name'] = "#{reason.upcase}: #{test_file}"
-      testcase_node << system_out
       testcase_node << reason_node
+      testcase_node << system_out
       @junit_doc.xpath("//testsuite").first.add_child(testcase_node)
     end
 
