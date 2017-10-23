@@ -80,6 +80,14 @@ module SolanoRspecRunner
           @errors += 1
         end
       else
+        # Need to change '<testcase><skipped/></testcase>' nodes to be '<ignored-testcase/>' for Solano's Junit parser
+        @junit_doc.xpath("//testsuite/testcase[skipped]").each do |skipped_node|
+          skipped_node.name = 'ignored-testcase'
+        end
+        # TODO: Insert test rerun functionality here???
+        #   refactor command setting/running into methods.
+        #   Pull rerun patterns/counts from ENV?
+        #   Inject previous results into junit xml?
         @missing_test_files.each do |test_file|
           add_testcase(test_file, 'skipped', "#{test_file} did not report output, marked as skipped")
           @tests += 1
@@ -116,14 +124,18 @@ module SolanoRspecRunner
       system_out.content = "#{message}#{message_extended}"
       reason_node = Nokogiri::XML::Node.new(reason, @junit_doc)
       reason_node['message'] = message
-      testcase = Nokogiri::XML::Node.new('testcase', @junit_doc)
-      testcase['classname'] = test_file.gsub(/.rb$/, '').gsub('/', '.') # To make consistent with RspecJunitFormatter
-      testcase['file'] = path_prefix_test_file(test_file)
-      testcase['time'] = "0"
-      testcase['name'] = "#{reason.upcase}: #{test_file}"
-      testcase << system_out
-      testcase << reason_node
-      @junit_doc.xpath("//testsuite").first.add_child(testcase)
+      testcase_node_name = 'testcase'
+      if reason == 'skipped' then
+        testcase_node_name = 'ignored-testcase'
+      end
+      testcase_node = Nokogiri::XML::Node.new(testcase_node_name, @junit_doc)
+      testcase_node['classname'] = test_file.gsub(/.rb$/, '').gsub('/', '.') # To make consistent with RspecJunitFormatter
+      testcase_node['file'] = path_prefix_test_file(test_file)
+      testcase_node['time'] = "0"
+      testcase_node['name'] = "#{reason.upcase}: #{test_file}"
+      testcase_node << system_out
+      testcase_node << reason_node
+      @junit_doc.xpath("//testsuite").first.add_child(testcase_node)
     end
 
     def get_report_path_info

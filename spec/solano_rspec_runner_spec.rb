@@ -21,9 +21,9 @@ RSpec.describe "Correctly creates junit xml" do
   let(:junit_doc) { File.open(File.join(EXAMPLE_DIR, report_file)) { |f| Nokogiri::XML(f) } }
   let(:testsuite) { junit_doc.xpath("//testsuite").first }
   let(:command_property) { junit_doc.xpath("//testsuite/properties/property[@name='command']").first}
-  let(:testcases) { junit_doc.xpath("/testsuite/testcase") }
+  let(:testcases) { junit_doc.xpath("/testsuite/testcase", "/testsuite/ignored-testcase") }
   let(:passing_testcases) { junit_doc.xpath("/testsuite/testcase[count(*)=0]") } # testcase has no child elements
-  let(:pending_testcases) { junit_doc.xpath("/testsuite/testcase[skipped]") }
+  let(:pending_testcases) { junit_doc.xpath("/testsuite/ignored-testcase") }
   let(:failed_testcases) { junit_doc.xpath("/testsuite/testcase[failure]") }
   let(:errored_testcases) { junit_doc.xpath("/testsuite/testcase[error]") }
   let(:first_failed_testcase_content) { junit_doc.xpath("/testsuite/testcase[failure]").first.content }
